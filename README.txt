@@ -21,5 +21,17 @@ then in Erlang shell
 
 2> tasks_sorter:basic_test().
 
+To start job_server run:
+
+3> application:start(tasks_sorter).
+
+To submit jobs send, send your data to the job_server:
+
+4> job_server ! <<"{ \"tasks\": [{ \"name\": \"task-1\", \"command\": \"touch /tmp/file1\"},
+{\"name\": \"task-2\",\"command\":\"cat /tmp/file1\",\"requires\":[\"task-3\"]},
+{\"name\": \"task-3\",\"command\": \"echo 'Hello World!' > /tmp/file1\",\"requires\":[\"task-1\"]},
+{\"name\": \"task-4\",\"command\": \"rm /tmp/file1\",\"requires\":[\"task-2\",\"task-3\"]}]}">> .
+
+
 
 **In this basic implementation, there is no input validation (like testing input possibly containing circular dependencies in 'required tasks')

@@ -1,20 +1,44 @@
 -module('tasks_sorter').
 -author('Oleg Strogan').
 
-%-export([task_example/0, te/0, sort_tasks/1, tasks_to_map/1, decode_extract_tasks/1, order_tasks_names/1, rebuild_tasks/2, test0/0]).
--export([order_tasks/1, basic_test/0]).
+-export([order_tasks/1, basic_test/0, simple_server/0, start_simple_server/0, stop_simple_server/0]).
 
 
--spec order_tasks(InputJobJSON :: binary()) -> {OutputJobJSON :: binary(), ShellScript :: binary()}.
+start_simple_server()->
+ io:format("To submit a job run command ~njob_server ! 'job'~n where 'job' is a task list in the agreed format (see example)~n "),
+ io:format("To stop the serer and exit application run command ~njob_server ! stop ~n"),
+ register(job_server, spawn_link(?MODULE, simple_server, [])),
+{ok,self()}.
 
-order_tasks(Input) ->
-  TList = decode_extract_tasks(Input),
-  TMap = tasks_to_map(TList),
-  {_,OrderedList} =  order_tasks_names(TMap),
-  rebuild_tasks(TMap, OrderedList).
+stop_simple_server() ->
+ job_server ! stop.
 
 
--spec basic_test() -> ok | term().
+simple_server() ->
+  receive
+    stop ->  io:format("Exiting application~n"), application:stop(tasks_sorter);
+    Input ->
+      io:format("Job input is:~n~n"),
+      io:put_chars(Input),
+      TList = decode_extract_tasks(Input),
+      TMap = tasks_to_map(TList),
+      {_,OrderedList} =  order_tasks_names(TMap),
+      {Rebuilt, Script} = rebuild_tasks(TMap, OrderedList),
+      io:format("~n~nJob example, tasks ordered:~n~n"),
+      io:put_chars(Rebuilt),
+      io:format("~n~njob shell commands:~n~n"),
+      io:put_chars(Script),
+
+      io:format("~n saving job to shell script 'ascript.sh'~n"),
+      {ok, FS} = file:open("ascript.sh", [raw,write,binary]),
+
+      file:write(FS,Script),
+      file:close(FS),
+      simple_server()
+  end.
+
+
+-spec basic_test() -> {ok, pid} | term().
 
 basic_test() ->
   Input = job_input_example(),
@@ -33,9 +57,17 @@ basic_test() ->
   {ok, FS} = file:open("ascript.sh", [raw,write,binary]),
 
   file:write(FS,Script),
-  file:close(FS).
+  file:close(FS),
+  {ok, self()}.
 
 
+-spec order_tasks(InputJobJSON :: binary()) -> {OutputJobJSON :: binary(), ShellScript :: binary()}.
+
+order_tasks(Input) ->
+  TList = decode_extract_tasks(Input),
+  TMap = tasks_to_map(TList),
+  {_,OrderedList} =  order_tasks_names(TMap),
+  rebuild_tasks(TMap, OrderedList).
 
 
 rebuild_tasks(TM,RList) ->
@@ -79,8 +111,6 @@ add_dep_tasks(TM,TList, [D | DTail], TaskMap) ->
       TMUpd = maps:put(D, NextTask, TM),
       add_dep_tasks(TMUpd, [D | TList], DTail, TaskMap)
   end.
-
-
 
 
 decode_extract_tasks(TasksInputExample) ->
