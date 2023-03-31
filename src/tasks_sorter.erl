@@ -1,23 +1,12 @@
 -module('tasks_sorter').
 -author('Oleg Strogan').
 
--export([order_tasks/1, basic_test/0, simple_server/0, start_simple_server/0, stop_simple_server/0]).
+-export([order_tasks/1, basic_test/0, order_job/1]).
 
 
-start_simple_server()->
- io:format("To submit a job run command ~njob_server ! 'job'~n where 'job' is a task list in the agreed format (see example)~n "),
- io:format("To stop the serer and exit application run command ~njob_server ! stop ~n"),
- register(job_server, spawn_link(?MODULE, simple_server, [])),
-{ok,self()}.
+-spec order_job(Input :: binary()) -> Output :: binary().
 
-stop_simple_server() ->
- job_server ! stop.
-
-
-simple_server() ->
-  receive
-    stop ->  io:format("Exiting application~n"), application:stop(tasks_sorter);
-    Input ->
+order_job(Input) -> 
       io:format("Job input is:~n~n"),
       io:put_chars(Input),
       TList = decode_extract_tasks(Input),
@@ -34,8 +23,7 @@ simple_server() ->
 
       file:write(FS,Script),
       file:close(FS),
-      simple_server()
-  end.
+      Rebuilt.
 
 
 -spec basic_test() -> {ok, pid} | term().

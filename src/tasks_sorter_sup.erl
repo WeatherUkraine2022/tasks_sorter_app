@@ -13,6 +13,7 @@ start_link() ->
 init(_Args) ->
 
   Flags = #{strategy => one_for_one, intensity => 2, period => 5},
-  Children = [#{id => my_worker, start => {tasks_sorter, start_simple_server, []}, restart => permanent}],
+%  Children = [#{id => my_worker, start => {tasks_sorter, start_simple_server, []}, restart => permanent}],
+  Children = [#{id => my_worker, start => {tasks_sorter_server, start_link, []}, restart => permanent}],
 
   {ok, {Flags, Children}}.

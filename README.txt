@@ -25,12 +25,16 @@ To start job_server run:
 
 3> application:start(tasks_sorter).
 
-To submit jobs send, send your data to the job_server:
+To order a  jobs, run:
 
-4> job_server ! <<"{ \"tasks\": [{ \"name\": \"task-1\", \"command\": \"touch /tmp/file1\"},
+4> tasks_sorter_server:process_job(YourJob).
+
+where YourJob may be like in this call:
+
+5>tasks_sorter_server:process_job(<<"{ \"tasks\": [{ \"name\": \"task-1\", \"command\": \"touch /tmp/file1\"},
 {\"name\": \"task-2\",\"command\":\"cat /tmp/file1\",\"requires\":[\"task-3\"]},
 {\"name\": \"task-3\",\"command\": \"echo 'Hello World!' > /tmp/file1\",\"requires\":[\"task-1\"]},
-{\"name\": \"task-4\",\"command\": \"rm /tmp/file1\",\"requires\":[\"task-2\",\"task-3\"]}]}">> .
+{\"name\": \"task-4\",\"command\": \"rm /tmp/file1\",\"requires\":[\"task-2\",\"task-3\"]}]}">>).
 
 
 
